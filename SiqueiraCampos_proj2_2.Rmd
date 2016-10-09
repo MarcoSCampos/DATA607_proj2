@@ -1,0 +1,91 @@
+---
+title: "SiqueiraCampos_proj2"
+author: "Marco Siqueira Campos"
+date: "9 de outubro de 2016"
+output: html_document
+---
+
+
+DATA 607  
+MSDA CUNY  
+
+PROJECT 2  
+ASSIGNMENT WK5     
+Tidying and Transforming Data  
+
+github [link](https://github.com/MarcoSCampos/DATA607_proj2)
+
+EXERCISE 2
+Religious vs income
+
+Proposal: Marco Siqueira Campos
+
+From: PEW Reserach Center
+Source: http://www.pewforum.org/religious-landscape-study/income-distribution/
+
+
+load library
+
+```{r load_library, warning=FALSE, message=FALSE}
+library(tidyr)
+library(dplyr)
+```
+
+read and check csv file 
+```{r read_file}
+df_td<-read.table("~/proj2_2.csv",sep=",",stringsAsFactors = FALSE)
+df_td
+```
+
+Set columns names
+```{r columns_names}
+colnames(df_td)<-c("Religion","below30k","from30kto49k","from50kto99k","from100k","sample")
+```
+
+Cleaning the data
+
+Remove row 1
+```{r remove_row}
+df_td<-df_td[-1,]
+```
+
+Remove "," and "%"
+```{r remove_charac}
+df_td$sample<-as.numeric(gsub(",","",df_td$sample))
+df_td$below30k<- as.numeric(gsub("%","",df_td$below30k))
+df_td$from30kto49k<- as.numeric(gsub("%","",df_td$from30kto49k))
+df_td$from50kto99k<- as.numeric(gsub("%","",df_td$from50kto99k))
+df_td$from100k<- as.numeric(gsub("%","",df_td$from100k))
+```
+
+Return the number value
+```{r return_number}
+for (i in 2:5) {
+df_td[,i]<-round((df_td[,i]/100)*df_td[,6])
+}
+```
+
+Remove column sample
+```{r remove_column}
+df_td$sample<-NULL
+```
+
+Gather the data, move several data column to one column
+```{r gather}
+df_td2<-gather(df_td,income,count,below30k:from100k)
+```
+
+**The data is tidy!**
+```{r tidy}
+df_td2
+```
+
+Is to time to analyse some data, check one religion, Hindu, and we can see a large income.
+
+```{r analy}
+df_td3<-df_td2
+df_td3%>%
+filter(Religion=="Hindu")%>%
+       mutate(percent=round(100*count/sum(count)))
+```
+
