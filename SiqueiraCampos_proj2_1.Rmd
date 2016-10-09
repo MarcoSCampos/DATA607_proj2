@@ -1,0 +1,159 @@
+---
+title: "SiqueiraCampos_proj2"
+author: "Marco Siqueira Campos"
+date: "9 de outubro de 2016"
+output: html_document
+---
+
+DATA 607  
+MSDA CUNY  
+
+PROJECT 2  
+ASSIGNMENT WK5     
+Tidying and Transforming Data  
+
+github [link](https://github.com/MarcoSCampos/DATA607_proj2)
+
+EXERCISE 1
+Gender income inequality
+
+Proposal: Ahsanul Choudhury
+
+From: Census USA
+Source: http://www.census.gov/population/age/data/files/2012/2012gender_table17.csv
+
+load library
+
+```{r load_library, warning=FALSE, message=FALSE}
+library(tidyr)
+library(dplyr)
+```
+
+read and check csv file 
+
+```{r read_file}
+df<-read.table("~/2012gender_table17.csv",sep=",",stringsAsFactors = FALSE)
+head(df, n=25)
+```
+
+Cleaning
+
+Remove rows and create a new variable "gender".
+
+```{r remove_rows}
+df<-df[-c(1:5,46:53),]
+df$v24[30:40]<-"Female"        
+df$v24[17:27]<-"Male"
+df$v24[4:14]<-"Both sexes"
+df<-df[-c(3,15,16,28,29),]        
+```
+
+New columns name
+
+```{r column_name}
+colnames(df)[1]<-"year"
+colnames(df)[24]<-"gender"
+colnames(df)[2:11]<-c("totaln","totalp","below5kn","below5kp","from05kto9.9kn","from05kto9.9kp","from10kto14.9kn","from10kto14.9kp","from15kto19.9Kn","from15kto19.9Kp") 
+colnames(df)[12:23]<-c("from20kto24.9n","from20kto24.9p","from25kto34.9Kn","from25kto34.9Kp","from35kto49.9kn","from35kto49.9kp","from50kto74.9kn","from50kto74.9kp","from75kto99.9kn","from75kto99.9kp","more100kn","more100kp")
+```
+
+Remove rows
+```{r remove_rows2}
+df<-df[-c(1,2),]
+```
+
+Change year variable to improve the search
+
+```{r change_year}
+df$year[c(1,12,23)]<-"15_to_17years"
+df$year[c(2,13,24)]<-"18_to_24years"
+df$year[c(3,14,25)]<-"25_to_29years"
+df$year[c(4,15,26)]<-"30_to_34years"
+df$year[c(5,16,27)]<-"35_to_39years"
+df$year[c(6,17,28)]<-"40_to_44years"
+df$year[c(7,18,29)]<-"45_to_49years"
+df$year[c(8,19,30)]<-"50_to_54years"
+df$year[c(9,20,31)]<-"55_to_59years"
+df$year[c(10,21,32)]<-"60_to_64years"
+df$year[c(11,22,33)]<-"65_years_and_over" 
+```
+Melt columns (Number e Percent)
+
+```{r melt_columns}
+u<-df%>%
+        unite(totaln,totalp,col="total",sep="/")%>%
+        unite(below5kn,below5kp,col="below5k",sep="/")%>%
+        unite(from05kto9.9kn,from05kto9.9kp,col="from05kto9,9k",sep="/")%>%
+        unite(from10kto14.9kn,from10kto14.9kp,col="from10kto14,9k",sep="/")%>%
+        unite(from15kto19.9Kn,from15kto19.9Kp,col="from15kto19,9K",sep="/")%>%
+        unite(from20kto24.9n,from20kto24.9p,col="from20kto24,9",sep="/")%>%
+        unite(from25kto34.9Kn,from25kto34.9Kp,col="from25kto34,9K",sep="/")%>%
+        unite(from35kto49.9kn,from35kto49.9kp,col="from35kto49,9k",sep="/")%>%
+        unite(from50kto74.9kn,from50kto74.9kp,col="from50kto74,9k",sep="/")%>%
+        unite(from75kto99.9kn,from75kto99.9kp,col="from75kto99,9k",sep="/")%>%
+        unite(more100kn,more100kp,col="more100k",sep="/")
+```        
+        
+
+Gather the data, moving to several columns to one column
+
+```{r gather}
+g<-gather(u,"Earnings","Number", -c(1,13))
+```
+
+
+Separated columns melted
+```{r separated}
+s<-separate(g,col = "Number", into=c("Number","Percent"), sep="/")
+```
+
+Cleaning again  
+change "-" for "0", and remove dot from number  
+Change gender as factor
+```{r cleaning_again}
+s$Number<-gsub("-","0",s$Number)
+s$Percent<-gsub("-","0",s$Percent)
+s$year<-gsub("\\.","",s$year)
+s['gender']<-lapply(s['gender'], factor)
+```
+
+**The data is tidy!**
+```{r tidy}
+head(s,n=20)
+```
+
+Now I did examples how is possible compare earnings by gender in two ways.
+I limited to the first rows.
+Obviously, many other ways are possible to do comparison.
+
+```{r compare1}
+s1<-s%>%
+ select(-Number)%>%        
+ filter(gender!="Both sexes")%>%
+ filter(Earnings!="total")%>%
+ spread(key=gender,value=Percent)
+head(s1,20L)
+```
+
+```{r compare2}
+s2<-s%>%
+ select(-Number)%>%        
+ filter(gender!="Both sexes")%>%
+ filter(Earnings!="total")%>%
+ spread(key=gender,value=Percent)%>%        
+ arrange(Earnings,year)
+ head(s2,20L)
+```
+ 
+The answer the question is better filter by one year range, 35 to 39 years   
+in this case male have higher earning than female
+
+```{r compare3}
+ s3<-s%>%
+         select(-Number)%>%        
+         filter(gender!="Both sexes")%>%
+         filter(Earnings!="total")%>%
+         filter(year=="35_to_39years")%>%
+         spread(key=gender,value=Percent)
+ head(s3,20L)
+```
