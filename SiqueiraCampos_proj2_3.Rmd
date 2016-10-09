@@ -1,0 +1,82 @@
+---
+title: "SiqueiraCampos_proj2"
+author: "Marco Siqueira Campos"
+date: "9 de outubro de 2016"
+output: html_document
+---
+
+
+DATA 607  
+MSDA CUNY  
+
+PROJECT 2  
+ASSIGNMENT WK5 
+Tidying and Transforming Data  
+
+github [link](https://github.com/MarcoSCampos/DATA607_proj2)
+
+EXERCISE 3
+Citizenship by region
+
+Proposal: Jose Zuniga
+
+Source: Tips for Simplifying Crosstab Query Statements, Rob Gravelle, Database Journal, 2010.
+
+
+load library
+```{r load_library, warning=FALSE, message=FALSE}
+library(tidyr)
+library(dplyr)
+```
+
+read and check csv file 
+```{r read_file}
+df_td<-read.table("~/proj2_1.csv",sep=",",stringsAsFactors = FALSE)
+df_td
+```
+
+Cleaning
+
+Remove rows and columns
+```{r remove_rows}
+df_td<-df_td[-11,]
+df_td$V7<-NULL
+```
+
+Set columns names and remove line 1
+```{r set_names}
+colnames(df_td)[1:6]<-df_td[1,1:6]
+df_td<-df_td[-1,]
+```
+
+Gather the data
+```{r gather}
+df_td2<-gather(df_td,"region","citizenship",2:6)
+```
+
+Change data type
+```{r change}
+df_td2['region']<-lapply(df_td2['region'], factor)
+df_td2['citizenship']<-lapply(df_td2['citizenship'], as.numeric)
+```
+
+**The data is tidy!**
+```{r tidy}
+df_td2
+```
+
+Time to begin to analyse
+```{r analy}
+df_td2 %>% 
+        group_by(Month)%>%
+        mutate(row=1:n())%>%
+        spread(Month,citizenship)%>%
+        select(-row)%>%
+        select(region, April, May, June, July, August, September, October, November, December)
+```        
+
+We can analyse same month, like August, for several regions
+```{r month}
+df_td2%>%
+    filter(Month=="August")
+```
